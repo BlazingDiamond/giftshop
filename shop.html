@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shop — Huda Therapy</title>
+  <meta name="description" content="Browse handcrafted jewellery, crystals, healing remedies, and therapies. Each piece is unique and made by hand in South Africa." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<nav>
+  <img src='images/Huda_Logo_1-removebg-preview.png' class='nav-logo'>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="shop.html" class="active">Shop</a></li>
+    <li><a href="about.html">Our Story</a></li>
+    <li><a href="about.html#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="#" class="nav-cart snipcart-checkout">
+      <span class="cart-icon">✦</span> Cart
+      <span class="snipcart-items-count"></span>
+    </a>
+    <button class="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+  <div class="page-hero">
+    <p class="section-eyebrow" style="justify-content:center;">The full collection</p>
+    <h1>The <em>Shop</em></h1>
+    <p>Everything is handmade. Everything is limited. When a piece is gone, it's gone.</p>
+  </div>
+
+  <section class="section section-white">
+    <div class="container">
+
+      <!-- FILTERS -->
+      <div class="shop-filters">
+        <span class="filter-label">Filter by:</span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="jewellery">Jewellery</button>
+        <button class="filter-btn" data-filter="crystals">Crystals</button>
+        <button class="filter-btn" data-filter="remedies">Healing Remedies</button>
+        <button class="filter-btn" data-filter="therapy">Therapies</button>
+      </div>
+
+      <!-- Product grid — populated by products.js -->
+      <div class="product-grid" id="product-grid">
+        <p class="shop-loading">Loading products…</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CUSTOM ORDER CTA -->
+  <section class="section section-cream">
+    <div class="container" style="text-align:center;max-width:680px;">
+      <p class="section-eyebrow">Something special in mind?</p>
+      <h2 class="section-title">Request a <em>custom piece</em></h2>
+      <p class="section-sub" style="margin-bottom:2rem;">Can't find exactly what you're looking for? Describe what you have in mind — a birthday gift, a wedding favour, a crystal set for a specific intention — and we'll create it just for you.</p>
+      <a href="about.html#contact" class="btn-primary">Request a custom order</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="footer-logo">Huda <span>Therapy</span></a>
+        <p class="footer-tagline">Handcrafted jewellery, crystals, and healing remedies made with love in South Africa.</p>
+      </div>
+      <div>
+        <p class="footer-col-title">Shop</p>
+        <ul class="footer-links">
+          <li><a href="shop.html">All products</a></li>
+          <li><a href="shop.html">Jewellery</a></li>
+          <li><a href="shop.html">Crystals</a></li>
+          <li><a href="shop.html">Healing Remedies</a></li>
+          <li><a href="shop.html">Therapies</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Info</p>
+        <ul class="footer-links">
+          <li><a href="about.html">Our story</a></li>
+          <li><a href="about.html#contact">Contact</a></li>
+          <li><a href="about.html#contact">Custom orders</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Secure payments</p>
+        <p style="font-size:0.82rem;color:var(--sand);line-height:1.7;">All transactions processed securely via PayFast. EFT, Visa, Mastercard, SnapScan, and Mobicred accepted.</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>&copy; 2026 Huda Therapy. All rights reserved.</span>
+      <span>Payments secured by PayFast</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Load product data first, then main logic -->
+<script src="js/products.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
