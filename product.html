@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Shop — Huda Therapy</title>
-  <meta name="description" content="Browse handcrafted jewellery, crystals, healing remedies, and therapies. Each piece is unique and made by hand in South Africa." />
+  <title>Product — Huda Therapy</title>
+  <meta name="description" content="View product details, description, and book therapy sessions." />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
 <nav>
-  <img src='images/Huda_Logo_1-removebg-preview.png' class='nav-logo'>
+  <img src="images/Huda_Logo_1-removebg-preview.png" class="nav-logo" alt="Huda Therapy">
   <ul class="nav-links">
     <li><a href="index.html">Home</a></li>
     <li><a href="shop.html" class="active">Shop</a></li>
@@ -28,45 +28,23 @@
   </div>
 </nav>
 
-<main>
+<main id="product-main">
 
-  <div class="page-hero">
-    <p class="section-eyebrow" style="justify-content:center;">The full collection</p>
-    <h1>The <em>Shop</em></h1>
-    <p>Everything is handmade. Everything is limited. When a piece is gone, it's gone.</p>
-  </div>
+  <section class="section section-white product-page-section">
+    <div class="container" id="product-detail-root">
+      <p class="shop-loading">Loading product…</p>
+    </div>
+  </section>
 
-  <section class="section section-white">
+  <section class="section section-cream" id="related-section" hidden>
     <div class="container">
-
-      <!-- FILTERS -->
-      <div class="shop-filters">
-        <span class="filter-label">Filter by:</span>
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="jewellery">Jewellery</button>
-        <button class="filter-btn" data-filter="crystals">Crystals</button>
-        <button class="filter-btn" data-filter="remedies">Healing Remedies</button>
-        <button class="filter-btn" data-filter="therapy">Therapies</button>
+      <div class="section-header">
+        <p class="section-eyebrow">Continue browsing</p>
+        <h2 class="section-title">You might also <em>love</em></h2>
       </div>
-
-      <!-- Product grid — loaded from Django catalog API -->
-      <div class="product-grid" id="product-grid">
-        <p class="shop-loading">Loading products…</p>
-      </div>
-
+      <div class="product-grid" id="related-grid"></div>
     </div>
   </section>
-
-  <!-- CUSTOM ORDER CTA -->
-  <section class="section section-cream">
-    <div class="container" style="text-align:center;max-width:680px;">
-      <p class="section-eyebrow">Something special in mind?</p>
-      <h2 class="section-title">Request a <em>custom piece</em></h2>
-      <p class="section-sub" style="margin-bottom:2rem;">Can't find exactly what you're looking for? Describe what you have in mind — a birthday gift, a wedding favour, a crystal set for a specific intention — and we'll create it just for you.</p>
-      <a href="about.html#contact" class="btn-primary">Request a custom order</a>
-    </div>
-  </section>
-
 </main>
 
 <footer>
@@ -74,7 +52,7 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="index.html" class="footer-logo">Huda <span>Therapy</span></a>
-        <p class="footer-tagline">Handcrafted jewellery, crystals, and healing remedies made with love in South Africa.</p>
+        <p class="footer-tagline">Handcrafted jewellery, crystals, healing remedies, and therapies made with love in South Africa.</p>
       </div>
       <div>
         <p class="footer-col-title">Shop</p>
@@ -106,7 +84,6 @@
   </div>
 </footer>
 
-<!-- Load product data first, then main logic -->
 <script src="https://js.paystack.co/v2/inline.js"></script>
 <script src="js/main.js"></script>
 </body>
