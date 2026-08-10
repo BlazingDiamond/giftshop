@@ -89,6 +89,7 @@ function defaultProductMeta(product) {
 
 function enrichProduct(product) {
   const isTherapy = product.category === 'therapy';
+  const isFeatured = product.badge === 'Featured';
   const images =
     product.images?.length > 0
       ? product.images
@@ -100,6 +101,7 @@ function enrichProduct(product) {
     price: Number(product.price),
     isTherapy,
     longDescription: product.longDescription || product.description,
+    isFeatured,
     images,
     image: product.image || images[0] || '',
     meta: product.meta?.length ? product.meta : defaultProductMeta(product)
@@ -202,6 +204,36 @@ async function renderProductGrid() {
   initAddToCartButtons();
   initScrollObserver();
 }
+/**
+ * Fetches product data, filters to only "Featured" badge products,
+ * renders cards into #product-featured, then re-attaches cart listeners.
+ */
+async function renderFeaturedProducts() {
+  const grid = document.getElementById('product-featured');
+  if (!grid) return;
+
+  let products;
+  try {
+    products = await loadProducts();
+  } catch (err) {
+    grid.innerHTML = '<p class="shop-error">Could not load products. Please try again later.</p>';
+    console.error('loadProducts error:', err);
+    return;
+  }
+
+  const featured = products.filter((p) => p.isFeatured);
+
+  if (!featured.length) {
+    grid.innerHTML = '<p class="shop-empty">No featured products right now.</p>';
+    return;
+  }
+
+  grid.innerHTML = featured.map((p) => buildProductCard(p, { linkToDetail: true })).join('');
+
+  initAddToCartButtons();
+  initScrollObserver();
+}
+
 
 // ─── PRODUCT DETAIL PAGE ──────────────────────────────────────────────────────
 
@@ -771,6 +803,8 @@ document.querySelectorAll('.snipcart-checkout, .nav-cart').forEach((link) => {
 
 if (document.getElementById('product-detail-root')) {
   renderProductDetail();
+} else if (document.getElementById('product-featured')) {
+  renderFeaturedProducts();
 } else {
   renderProductGrid();
 }
