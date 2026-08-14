@@ -417,6 +417,19 @@ const CART_STORAGE_KEY = 'hudaCartV1';
 const PAYSTACK_PUBLIC_KEY = 'pk_test_9d407570be17d3e7caf8d433ddae3a47433d459b';
 const PAYSTACK_KEY_PLACEHOLDER = 'pk_test_REPLACE_ME';
 const PAYSTACK_INLINE_JS = 'https://js.paystack.co/v2/inline.js';
+/** Flip this to false (or wire it to a server flag) to disable the Paystack button
+ *  if the main payment system is down. The manual bank-transfer flow stays available. */
+const PAYSTACK_ENABLED = true;
+
+/** Owner's banking details shown in the manual "Pay via bank transfer" popup. */
+const BANK_TRANSFER_DETAILS = {
+  accountName: 'Huda (Pty) Ltd',
+  bank: 'First National Bank',
+  accountNumber: '000000000',
+  accountType: 'Cheque / Business',
+  branchCode: '250655',
+  reference: 'Use your name as reference'
+};
 
 function formatZar(amount) {
   return `R ${amount.toFixed(2)}`;
@@ -508,7 +521,8 @@ function createCartDrawer() {
       </div>
       <label class="cart-email-label" for="cart-checkout-email">Email for receipt</label>
       <input type="email" id="cart-checkout-email" class="cart-checkout-email" placeholder="you@example.com" autocomplete="email" />
-      <button type="button" class="btn-primary cart-checkout-btn">Pay securely</button>
+      <button type="button" class="btn-primary cart-checkout-btn" ${PAYSTACK_ENABLED ? '' : 'disabled'}>Pay securely</button>
+      <button type="button" class="btn-secondary cart-banktransfer-btn">Pay via bank transfer</button>
     </div>
   `;
   document.body.appendChild(drawer);
@@ -520,6 +534,7 @@ function createCartDrawer() {
   overlay.addEventListener('click', close);
   drawer.querySelector('.cart-close').addEventListener('click', close);
   drawer.querySelector('.cart-checkout-btn').addEventListener('click', checkoutWithPaystack);
+  drawer.querySelector('.cart-banktransfer-btn').addEventListener('click', openBankTransferModal);
 }
 
 function openCartDrawer() {
@@ -541,14 +556,17 @@ function renderCart() {
   const empty = drawer.querySelector('.cart-empty');
   const totalEl = drawer.querySelector('.cart-total-value');
   const checkoutBtn = drawer.querySelector('.cart-checkout-btn');
+  const bankTransferBtn = drawer.querySelector('.cart-banktransfer-btn');
 
   list.innerHTML = '';
   if (!cart.length) {
     empty.style.display = 'block';
     checkoutBtn.disabled = true;
+    if (bankTransferBtn) bankTransferBtn.disabled = true;
   } else {
     empty.style.display = 'none';
-    checkoutBtn.disabled = false;
+    checkoutBtn.disabled = !PAYSTACK_ENABLED;
+    if (bankTransferBtn) bankTransferBtn.disabled = false;
     cart.forEach((item) => {
       const lineId = item.cartKey || item.id;
       const li = document.createElement('li');
@@ -708,6 +726,228 @@ async function checkoutWithPaystack() {
     showNotification(err.message || 'Checkout failed.', 5000);
   } finally {
     if (checkoutBtn) checkoutBtn.disabled = !getCart().length;
+  }
+}
+
+// ─── MANUAL BANK TRANSFER (proof-of-payment upload, bypasses Paystack) ────────
+
+function injectBankTransferStyles() {
+  if (document.querySelector('#bank-transfer-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'bank-transfer-styles';
+  style.textContent = `
+    #bank-transfer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 9998;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    #bank-transfer-overlay.show {
+      display: block;
+      opacity: 1;
+    }
+    #bank-transfer-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.96);
+      width: min(440px, 92vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      z-index: 9999;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    #bank-transfer-modal.open {
+      display: block;
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .bank-transfer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .bank-transfer-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+    .bank-transfer-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      line-height: 1;
+      cursor: pointer;
+      color: #666;
+    }
+    .bank-transfer-body {
+      padding: 20px;
+    }
+    .bank-transfer-intro {
+      margin: 0 0 16px;
+      color: #444;
+      font-size: 0.92rem;
+    }
+    .bank-transfer-details {
+      margin: 0 0 20px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .bank-transfer-details > div {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+    }
+    .bank-transfer-details > div:nth-child(even) {
+      background: #fafafa;
+    }
+    .bank-transfer-details dt {
+      color: #777;
+      font-weight: 500;
+    }
+    .bank-transfer-details dd {
+      margin: 0;
+      font-weight: 600;
+      text-align: right;
+    }
+    .bank-transfer-upload-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+    .bank-transfer-proof-input {
+      display: block;
+      width: 100%;
+      margin-bottom: 18px;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+function createBankTransferModal() {
+  if (document.querySelector('#bank-transfer-modal')) return;
+  injectBankTransferStyles();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'bank-transfer-overlay';
+  document.body.appendChild(overlay);
+
+  const modal = document.createElement('div');
+  modal.id = 'bank-transfer-modal';
+  modal.innerHTML = `
+    <div class="bank-transfer-header">
+      <h3>Pay via bank transfer</h3>
+      <button type="button" class="bank-transfer-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="bank-transfer-body">
+      <p class="bank-transfer-intro">Make your payment using the details below, then upload proof of payment.</p>
+      <dl class="bank-transfer-details">
+        <div><dt>Account name</dt><dd>${BANK_TRANSFER_DETAILS.accountName}</dd></div>
+        <div><dt>Bank</dt><dd>${BANK_TRANSFER_DETAILS.bank}</dd></div>
+        <div><dt>Account number</dt><dd>${BANK_TRANSFER_DETAILS.accountNumber}</dd></div>
+        <div><dt>Account type</dt><dd>${BANK_TRANSFER_DETAILS.accountType}</dd></div>
+        <div><dt>Branch code</dt><dd>${BANK_TRANSFER_DETAILS.branchCode}</dd></div>
+        <div><dt>Reference</dt><dd>${BANK_TRANSFER_DETAILS.reference}</dd></div>
+      </dl>
+      <label class="bank-transfer-upload-label" for="bank-transfer-proof">Proof of payment (photo)</label>
+      <input type="file" id="bank-transfer-proof" class="bank-transfer-proof-input" accept="image/*" />
+      <button type="button" class="btn-primary bank-transfer-submit-btn">Submit proof of payment</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => {
+    modal.classList.remove('open');
+    overlay.classList.remove('show');
+  };
+  overlay.addEventListener('click', close);
+  modal.querySelector('.bank-transfer-close').addEventListener('click', close);
+  modal.querySelector('.bank-transfer-submit-btn').addEventListener('click', submitBankTransferProof);
+}
+
+function openBankTransferModal() {
+  const cart = getCart();
+  if (!cart.length) {
+    showNotification('Your cart is empty.');
+    return;
+  }
+  createBankTransferModal();
+  document.querySelector('#bank-transfer-modal')?.classList.add('open');
+  document.querySelector('#bank-transfer-overlay')?.classList.add('show');
+}
+
+function closeBankTransferModal() {
+  document.querySelector('#bank-transfer-modal')?.classList.remove('open');
+  document.querySelector('#bank-transfer-overlay')?.classList.remove('show');
+}
+
+async function submitManualPaymentProof(email, cart, proofFile) {
+  const formData = new FormData();
+  formData.append('email', email);
+  formData.append('amount', Number(cartTotal(cart).toFixed(2)));
+  formData.append('cart', JSON.stringify(cartPayloadForApi(cart)));
+  formData.append('proof', proofFile);
+
+  const res = await fetch(`${API_BASE_URL}/api/payments/manual/`, {
+    method: 'POST',
+    body: formData
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.detail || 'Could not submit proof of payment.');
+  return data;
+}
+
+async function submitBankTransferProof() {
+  const cart = getCart();
+  if (!cart.length) {
+    showNotification('Your cart is empty.');
+    closeBankTransferModal();
+    return;
+  }
+
+  const emailInput = document.querySelector('#cart-checkout-email');
+  const email = emailInput?.value?.trim();
+  if (!email) {
+    showNotification('Enter your email before submitting proof of payment.');
+    return;
+  }
+
+  const proofInput = document.querySelector('#bank-transfer-proof');
+  const proofFile = proofInput?.files?.[0];
+  if (!proofFile) {
+    showNotification('Upload a photo of your proof of payment.');
+    return;
+  }
+
+  const submitBtn = document.querySelector('.bank-transfer-submit-btn');
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    await submitManualPaymentProof(email, cart, proofFile);
+    setCart([]);
+    renderCart();
+    closeBankTransferModal();
+    document.querySelector('#custom-cart-drawer')?.classList.remove('open');
+    document.querySelector('#cart-overlay')?.classList.remove('show');
+    showNotification('Proof of payment received — we will confirm shortly.', 5000);
+    if (proofInput) proofInput.value = '';
+  } catch (err) {
+    showNotification(err.message || 'Could not submit proof of payment.', 5000);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
   }
 }
 
