@@ -42,7 +42,7 @@ function showNotification(message, duration = 3000) {
 // ─── PRODUCT RENDERING ────────────────────────────────────────────────────────
 
 /** Django API — change port if your runserver uses another one. */
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'https://not-using-tis.onrender.com/';
 
 /**
  * loadProducts() — fetches published stock from the Django catalog API.
